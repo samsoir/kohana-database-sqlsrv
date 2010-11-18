@@ -231,6 +231,9 @@ class Database_Sqlsrv_Core extends Database {
 
 	public function list_tables($like = NULL)
 	{
+		// Connect to DB if required
+		$this->_connection or $this->connect();
+
 		if (is_string($like))
 		{
 			if ($query = sqlsrv_prepare($this->_connection, 'sp_tables @table_name=?', array($like)) === FALSE)
@@ -293,6 +296,9 @@ class Database_Sqlsrv_Core extends Database {
 	{
 		// Quote the table name
 		$table = ($add_prefix === TRUE) ? $this->quote_table($table) : $table;
+
+		// Connect to DB if required
+		$this->_connection or $this->connect();
 
 		if (is_string($like))
 		{
