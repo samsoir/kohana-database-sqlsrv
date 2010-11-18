@@ -295,14 +295,14 @@ class Database_Sqlsrv_Core extends Database {
 	public function list_columns($table, $like = NULL, $add_prefix = TRUE)
 	{
 		// Quote the table name
-		$table = ($add_prefix === TRUE) ? $this->quote_table($table) : $table;
+		//$table = ($add_prefix === TRUE) ? $this->quote_table($table) : $table;
 
 		// Connect to DB if required
 		$this->_connection or $this->connect();
 
 		if (is_string($like))
 		{
-			if (($query = sqlsrv_prepare($this->_connection, 'sp_columns @table_name=?', array($like))) === FALSE)
+			if (($query = sqlsrv_prepare($this->_connection, 'sp_columns @table_name=?', array($table))) === FALSE)
 			{
 				// Get the errors
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
@@ -328,77 +328,78 @@ class Database_Sqlsrv_Core extends Database {
 		}
 		else
 		{
-			if (($result = sqlsrv_query($this->_connection, 'sp_columns', array($like))) === FALSE)
+			if (($result = sqlsrv_query($this->_connection, "sp_columns @table_name=?", array($table))) === FALSE)
 			{
 				// Get the errors
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
 
 				// Throw an exception
 				throw new Sqlsrv_Exception(':error [ :query ]',
-					array(':error'  => $error[0]['message'], ':query' => 'sp_columns'),
+					array(':error'  => $error[0]['message'], ':query' => 'sp_columns @table_name=?'),
 					$error[0]['code']
 				);
 			}
 		}
-
+        
 		$columns = array();
-		$result_array = sqlsrv_fetch_array($result);
 
-		if (is_array($result_array))
-		{
-			foreach ($result_array as $row)
-			{
-				$column = $this->datatype($row['TYPE_NAME']);
+		while($result_array = sqlsrv_fetch_array($result)) {
 
-				$column['column_name']      = $row['COLUMN_NAME'];
-				$column['column_default']   = $row['COLUMN_DEF'];
-				$column['data_type']        = $row['TYPE_NAME'];
-				$column['is_nullable']      = ($row['NULLABLE'] == 1);
-				$column['ordinal_position'] = $row['ORDINAL_POSITION'];
+            if (is_array($result_array))
+            {
 
-				switch ($column['type'])
-				{
-					case 'float':
-						$column['numeric_precision'] = $row['PRECISION'];
-						$column['numeric_scale'] = $row['SCALE'];
-					break;
-					case 'int':
-						$column['display'] = $row['LENGTH'];
-						$column['radix'] = $row['RADIX'];
-					break;
-					case 'string':
-						switch ($column['data_type'])
-						{
-							case 'binary':
-							case 'varbinary':
-							case 'varbinary(MAX)':
-							case 'varchar(MAX)':
-							case 'geography':
-							case 'geometry':
-							case 'image':
-							case 'char':
-							case 'nchar':
-							case 'nvarchar':
-							case 'varchar':
-							case 'money':
-							case 'smallmoney':
-							case 'numeric':
-							case 'sql_variant':
-							case 'uniqueidentifier':
-							case 'decimal':
-							case 'bigint':
-								$column['character_maximum_length'] = $row['CHAR_OCTET_LENGTH'];
-							break;
-						}
-					break;
-				}
+                $column = $this->datatype($result_array['TYPE_NAME']);
 
-				// MySQL attributes
-				$column['comment']      = $row['REMARKS'];   // NOT SUPPORTED AT THE MOMENT, WILL ALWAYS BE NULL
-				$column['key']          = ((strpos(' identity') !== FALSE) ? 'identity' : FALSE);
-				$columns[$row['Field']] = $column;
-			}
-		}
+                $column['column_name']      = $result_array['COLUMN_NAME'];
+                $column['column_default']   = $result_array['COLUMN_DEF'];
+                $column['data_type']        = preg_replace('/\s([a-z]+)/i', '',$result_array['TYPE_NAME']);
+                $column['is_nullable']      = ($result_array['NULLABLE'] == 1);
+                $column['ordinal_position'] = $result_array['ORDINAL_POSITION'];
+
+                switch ($column['data_type'])
+                {
+                    case 'float':
+                        $column['numeric_precision'] = $result_array['PRECISION'];
+                        $column['numeric_scale'] = $result_array['SCALE'];
+                    break;
+                    case 'int':
+                        $column['display'] = $result_array['LENGTH'];
+                        $column['radix'] = $result_array['RADIX'];
+                    break;
+                    case 'string':
+                        switch ($column['data_type'])
+                        {
+                            case 'binary':
+                            case 'varbinary':
+                            case 'varbinary(MAX)':
+                            case 'varchar(MAX)':
+                            case 'geography':
+                            case 'geometry':
+                            case 'image':
+                            case 'char':
+                            case 'nchar':
+                            case 'nvarchar':
+                            case 'varchar':
+                            case 'money':
+                            case 'smallmoney':
+                            case 'numeric':
+                            case 'sql_variant':
+                            case 'uniqueidentifier':
+                            case 'decimal':
+                            case 'bigint':
+                                $column['character_maximum_length'] = $result_array['CHAR_OCTET_LENGTH'];
+                            break;
+                        }
+                    break;
+                }
+
+                // MySQL attributes
+                $column['comment']      = $result_array['REMARKS'];   // NOT SUPPORTED AT THE MOMENT, WILL ALWAYS BE NULL
+                $column['key']          = ((strpos($result_array['TYPE_NAME'], ' identity') !== FALSE) ? 'identity' : FALSE);
+                $columns[$result_array['COLUMN_NAME']] = $column;
+
+            }
+        }
 
 		sqlsrv_free_stmt($result);
 		return $columns;
