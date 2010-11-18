@@ -11,7 +11,7 @@
  * @copyright  (c) 2008-2009 Kohana Team
  * @license    http://kohanaphp.com/license
  */
-class Database_Query_Builder_Where extends Kohana_Database_Query_Builder_Where {
+abstract class Database_Query_Builder_Where extends Kohana_Database_Query_Builder_Where {
 
 	/**
 	 * Return up to "LIMIT ..." results
