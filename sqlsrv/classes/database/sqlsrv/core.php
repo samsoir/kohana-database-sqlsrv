@@ -95,7 +95,7 @@ class Database_Sqlsrv_Core extends Database {
 		));
 	}
 
-	public function query($type, $sql, $as_object = FALSE)
+	public function query($type, $sql, $as_object)
 	{
 		// Make sure the database is connected
 		$this->_connection or $this->connect();
@@ -245,7 +245,7 @@ class Database_Sqlsrv_Core extends Database {
 				);
 			}
 
-			if (($result = sqlsrv_exec($query)) === FALSE)
+			if (($result = sqlsrv_execute($query)) === FALSE)
 			{
 				// Get the errors
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
@@ -259,7 +259,7 @@ class Database_Sqlsrv_Core extends Database {
 		}
 		else
 		{
-			if ($result = sqlsrv_exec($this->_connection, 'sp_tables', array($like)))
+			if ($result = sqlsrv_query($this->_connection, 'sp_tables', array($like)))
 			{
 				// Get the errors
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
@@ -291,6 +291,7 @@ class Database_Sqlsrv_Core extends Database {
 
 	public function list_columns($table, $like = NULL, $add_prefix = TRUE)
 	{
+        $this->_connection or $this->connect();
 		// Quote the table name
 		$table = ($add_prefix === TRUE) ? $this->quote_table($table) : $table;
 
@@ -308,7 +309,7 @@ class Database_Sqlsrv_Core extends Database {
 				);
 			}
 
-			if (($result = sqlsrv_exec($query)) === FALSE)
+			if (($result = sqlsrv_execute($query)) === FALSE)
 			{
 				// Get the errors
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
@@ -322,7 +323,7 @@ class Database_Sqlsrv_Core extends Database {
 		}
 		else
 		{
-			if ($result = sqlsrv_exec($this->_connection, 'sp_columns', array($like)))
+			if ($result = sqlsrv_query($this->_connection, 'sp_columns', array($like)))
 			{
 				// Get the errors
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
