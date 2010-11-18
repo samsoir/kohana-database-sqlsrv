@@ -302,14 +302,14 @@ class Database_Sqlsrv_Core extends Database {
 
 		if (is_string($like))
 		{
-			if (($query = sqlsrv_prepare($this->_connection, 'sp_columns @table_name=?', array($like))) === FALSE)
+			if (($query = sqlsrv_prepare($this->_connection, 'sp_columns @table_name=? @column_name=?', array($table, $like))) === FALSE)
 			{
 				// Get the errors
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
 
 				// Throw an exception
 				throw new Sqlsrv_Exception(':error [ :query ]',
-					array(':error'  => $error[0]['message'], ':query' => 'sp_columns @table_name=?'),
+					array(':error'  => $error[0]['message'], ':query' => 'sp_columns @table_name=? @column_name=?'),
 					$error[0]['code']
 				);
 			}
@@ -321,21 +321,21 @@ class Database_Sqlsrv_Core extends Database {
 
 				// Throw an exception
 				throw new Sqlsrv_Exception(':error [ :query ]',
-					array(':error'  => $error[0]['message'], ':query' => 'sp_columns @table_name=?'),
+					array(':error'  => $error[0]['message'], ':query' => 'sp_columns @table_name=? @column_name=?'),
 					$error[0]['code']
 				);
 			}
 		}
 		else
 		{
-			if (($result = sqlsrv_query($this->_connection, 'sp_columns', array($like))) === FALSE)
+			if (($result = sqlsrv_query($this->_connection, 'sp_columns @table_name=?', array($table))) === FALSE)
 			{
 				// Get the errors
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
 
 				// Throw an exception
 				throw new Sqlsrv_Exception(':error [ :query ]',
-					array(':error'  => $error[0]['message'], ':query' => 'sp_columns'),
+					array(':error'  => $error[0]['message'], ':query' => 'sp_columns @table_name=?'),
 					$error[0]['code']
 				);
 			}
