@@ -120,7 +120,7 @@ class Database_Sqlsrv_Core extends Database {
 		}
 
 		// Execute the query
-		if (($result = sqlsrv_query($this->_connection, $sql)) === FALSE)
+		if (($result = sqlsrv_query($this->_connection, $sql, array(), array('Scrollable' => SQLSRV_CURSOR_KEYSET))) === FALSE)
 		{
 			// If something went wrong
 			if (isset($benchmark))
@@ -138,7 +138,7 @@ class Database_Sqlsrv_Core extends Database {
 				$error[0]['code']
 			);
 		}
-
+        
 		if (isset($benchmark))
 		{
 			Profiler::stop($benchmark);
@@ -236,7 +236,7 @@ class Database_Sqlsrv_Core extends Database {
 
 		if (is_string($like))
 		{
-			if (($query = sqlsrv_prepare($this->_connection, 'sp_tables @table_name=?', array($like))) === FALSE)
+			if (($query = sqlsrv_prepare($this->_connection, 'sp_tables @table_name=?', array($like), array('Scrollable' => SQLSRV_CURSOR_KEYSET))) === FALSE)
 			{
 				// Get the errors
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
@@ -262,7 +262,7 @@ class Database_Sqlsrv_Core extends Database {
 		}
 		else
 		{
-			if (($result = sqlsrv_query($this->_connection, 'sp_tables', array($like))) === FALSE)
+			if (($result = sqlsrv_query($this->_connection, 'sp_tables', array($like), array('Scrollable' => SQLSRV_CURSOR_KEYSET))) === FALSE)
 			{
 				// Get the errors
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
@@ -302,7 +302,7 @@ class Database_Sqlsrv_Core extends Database {
 
 		if (is_string($like))
 		{
-			if (($query = sqlsrv_prepare($this->_connection, 'sp_columns @table_name=? @column_name=?', array($table, $like))) === FALSE)
+			if (($query = sqlsrv_prepare($this->_connection, 'sp_columns @table_name=? @column_name=?', array($table, $like), array('Scrollable' => SQLSRV_CURSOR_KEYSET))) === FALSE)
 			{
 				// Get the errors
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
@@ -328,7 +328,7 @@ class Database_Sqlsrv_Core extends Database {
 		}
 		else
 		{
-			if (($result = sqlsrv_query($this->_connection, 'sp_columns @table_name=?', array($table))) === FALSE)
+			if (($result = sqlsrv_query($this->_connection, 'sp_columns @table_name=?', array($table), array('Scrollable' => SQLSRV_CURSOR_KEYSET))) === FALSE)
 			{
 				// Get the errors
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
