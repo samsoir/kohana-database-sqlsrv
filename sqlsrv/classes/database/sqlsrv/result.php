@@ -12,9 +12,9 @@ class Database_Sqlsrv_Result extends Database_Result {
 
 	protected $_internal_row = 0;
 
-	public function __construct($result, $sql, $as_object = FALSE, array $params = NULL)
+	public function __construct($result, $sql, $as_object)
 	{
-		parent::__construct($result, $sql, $as_object, $params);
+		parent::__construct($result, $sql, $as_object);
 
 		// Find the number of rows in the result
 		$this->_total_rows = sqlsrv_num_rows($result);
