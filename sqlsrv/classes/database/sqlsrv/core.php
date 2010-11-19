@@ -16,6 +16,18 @@ class Database_Sqlsrv_Core extends Database {
 	// MSSQL uses a square brackets for identifiers
 	protected $_identifier = array('[', ']');
 
+	/**
+	 * Provides access to the database resource
+	 *
+	 * @return  resource
+	 */
+	public function get_database_resource()
+	{
+		$this->_connection or $this->connect();
+
+		return $this->_connection;
+	}
+
 	public function connect()
 	{
 		if ($this->_connection)
@@ -44,8 +56,9 @@ class Database_Sqlsrv_Core extends Database {
 		{
 			// Create a connection
 			$this->_connection = sqlsrv_connect($server, $mssql_config);
+			$errors = sqlsrv_errors(SQLSRV_ERR_ALL);
 			if ($this->_connection === FALSE)
-				throw new Sqlsrv_Exception(':error, :sqlstate', array(
+				throw new Database_Sqlsrv_Exception(':error, :sqlstate', array(
 					':error'    => $errors[0]['message'],
 					':sqlstate' => $errors[0]['SQLSTATE']
 				), $errors[0]['code']);
@@ -53,7 +66,7 @@ class Database_Sqlsrv_Core extends Database {
 		catch (ErrorException $e)
 		{
 			$errors = sqlsrv_errors(SQLSRV_ERR_ALL);
-			throw new Sqlsrv_Exception(':error, :sqlstate', array(
+			throw new Database_Sqlsrv_Exception(':error, :sqlstate', array(
 				':error'    => $errors[0]['message'],
 				':sqlstate' => $errors[0]['SQLSTATE']
 			), $errors[0]['code']);
@@ -90,12 +103,12 @@ class Database_Sqlsrv_Core extends Database {
 
 	public function set_charset($charset)
 	{
-		throw new Sqlsrv_Exception(':unsupported',
+		throw new Database_Sqlsrv_Exception(':unsupported',
 			array(':unsupported' => 'Setting of Character Set must be defined in the configuration during connection'
 		));
 	}
 
-	public function query($type, $sql, $as_object)
+	public function query($type, $sql, $as_object = FALSE, array $params = NULL)
 	{
 		// Make sure the database is connected
 		$this->_connection or $this->connect();
@@ -116,11 +129,12 @@ class Database_Sqlsrv_Core extends Database {
 			// Locate VALUES
 			$values = strpos($sql, 'VALUES');
 
+			// Insert the lastInsertId logic
 			$sql = substr($sql_statement, 0, $values).'output inserted.identitycol AS lastInsertId '.substr($sql_statement, $values);
 		}
 
 		// Execute the query
-		if (($result = sqlsrv_query($this->_connection, $sql)) === FALSE)
+		if (($result = sqlsrv_query($this->_connection, $sql, $params, array('Scrollable' => SQLSRV_CURSOR_KEYSET))) === FALSE)
 		{
 			// If something went wrong
 			if (isset($benchmark))
@@ -133,7 +147,7 @@ class Database_Sqlsrv_Core extends Database {
 			$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
 
 			// Throw an exception
-			throw new Sqlsrv_Exception(':error [ :query ]',
+			throw new Database_Sqlsrv_Exception(':error [ :query ]',
 				array(':error'  => $error[0]['message'], ':query' => $sql),
 				$error[0]['code']
 			);
@@ -161,7 +175,7 @@ class Database_Sqlsrv_Core extends Database {
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
 
 				// Throw an exception
-				throw new Sqlsrv_Exception(':error [ :query ]',
+				throw new Database_Sqlsrv_Exception(':error [ :query ]',
 					array(':error'  => 'Unable to get the last inserted row ID from driver', ':query' => $sql),
 					$error[0]['code']
 				);
@@ -242,7 +256,7 @@ class Database_Sqlsrv_Core extends Database {
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
 
 				// Throw an exception
-				throw new Sqlsrv_Exception(':error [ :query ]',
+				throw new Database_Sqlsrv_Exception(':error [ :query ]',
 					array(':error'  => $error[0]['message'], ':query' => 'sp_tables @table_name=?'),
 					$error[0]['code']
 				);
@@ -254,7 +268,7 @@ class Database_Sqlsrv_Core extends Database {
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
 
 				// Throw an exception
-				throw new Sqlsrv_Exception(':error [ :query ]',
+				throw new Database_Sqlsrv_Exception(':error [ :query ]',
 					array(':error'  => $error[0]['message'], ':query' => 'sp_tables @table_name=?'),
 					$error[0]['code']
 				);
@@ -268,7 +282,7 @@ class Database_Sqlsrv_Core extends Database {
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
 
 				// Throw an exception
-				throw new Sqlsrv_Exception(':error [ :query ]',
+				throw new Database_Sqlsrv_Exception(':error [ :query ]',
 					array(':error'  => $error[0]['message'], ':query' => 'sp_tables'),
 					$error[0]['code']
 				);
@@ -308,7 +322,7 @@ class Database_Sqlsrv_Core extends Database {
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
 
 				// Throw an exception
-				throw new Sqlsrv_Exception(':error [ :query ]',
+				throw new Database_Sqlsrv_Exception(':error [ :query ]',
 					array(':error'  => $error[0]['message'], ':query' => 'sp_columns @table_name=? @column_name=?'),
 					$error[0]['code']
 				);
@@ -320,7 +334,7 @@ class Database_Sqlsrv_Core extends Database {
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
 
 				// Throw an exception
-				throw new Sqlsrv_Exception(':error [ :query ]',
+				throw new Database_Sqlsrv_Exception(':error [ :query ]',
 					array(':error'  => $error[0]['message'], ':query' => 'sp_columns @table_name=? @column_name=?'),
 					$error[0]['code']
 				);
@@ -334,7 +348,7 @@ class Database_Sqlsrv_Core extends Database {
 				$error = sqlsrv_errors(SQLSRV_ERR_ERRORS);
 
 				// Throw an exception
-				throw new Sqlsrv_Exception(':error [ :query ]',
+				throw new Database_Sqlsrv_Exception(':error [ :query ]',
 					array(':error'  => $error[0]['message'], ':query' => 'sp_columns @table_name=?'),
 					$error[0]['code']
 				);
